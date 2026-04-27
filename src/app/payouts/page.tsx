@@ -5,6 +5,8 @@ import { Activity, CreditCard, LayoutDashboard, Wallet, LogOut, ArrowUpRight, Ch
 import Link from 'next/link';
 import PayoutForm from './PayoutForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PayoutsPage() {
   const session = await getSession();
   if (!session || !session.userId) {
