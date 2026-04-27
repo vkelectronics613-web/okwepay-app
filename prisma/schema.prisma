@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// BANK TABLES
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  upi_id        String   @unique
+  password_hash String
+  balance       Float    @default(0.0)
+  trust_score   Int      @default(100)
+  created_at    DateTime @default(now())
+
+  sent_transactions     Transaction[] @relation("Sender")
+  received_transactions Transaction[] @relation("Receiver")
+
+  sent_requests     Request[] @relation("RequestSender")
+  received_requests Request[] @relation("RequestReceiver")
+
+  @@map("okwebank_users")
+}
+
+model Transaction {
+  txn_id     String   @id @default(uuid())
+  from_upi   String
+  to_upi     String
+  amount     Float
+  type       String
+  status     String
+  timestamp  DateTime @default(now())
+
+  sender   User? @relation("Sender", fields: [from_upi], references: [upi_id])
+  receiver User? @relation("Receiver", fields: [to_upi], references: [upi_id])
+
+  @@map("okwebank_transactions")
+}
+
+model Request {
+  request_id String   @id @default(uuid())
+  from_user  String
+  to_user    String
+  amount     Float
+  status     String
+  created_at DateTime @default(now())
+
+  sender   User? @relation("RequestSender", fields: [from_user], references: [upi_id])
+  receiver User? @relation("RequestReceiver", fields: [to_user], references: [upi_id])
+
+  @@map("okwebank_requests")
+}
+
+// GATEWAY TABLES
+model Merchant {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  webhook_url   String?
+  payout_upi    String?  // NEW: Link your bank account
+  created_at    DateTime @default(now())
+
+  api_keys ApiKey[]
+  payments Payment[]
+  payouts  Payout[]
+
+  @@map("okwepay_merchants")
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  merchant_id String
+  public_key  String   @unique
+  secret_key  String   @unique
+  created_at  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchant_id], references: [id])
+
+  @@map("okwepay_api_keys")
+}
+
+model Payment {
+  payment_id  String   @id @default(uuid())
+  merchant_id String
+  amount      Float
+  status      String
+  created_at  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchant_id], references: [id])
+
+  @@map("okwepay_payments")
+}
+
+model Payout {
+  id          String   @id @default(uuid())
+  merchant_id String
+  amount      Float
+  status      String   // "success", "failed"
+  created_at  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchant_id], references: [id])
+
+  @@map("okwepay_payouts")
+}

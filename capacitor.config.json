@@ -1,0 +1,12 @@
+{
+  "appId": "com.okwepay.app",
+  "appName": "OkwePay",
+  "webDir": "out",
+  "server": {
+    "url": "https://okwepay.vercel.app",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
